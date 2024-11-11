@@ -1,0 +1,14 @@
+@startuml
+
+usecase "/autoware_state_machine"
+usecase "/status_display_manager" #LightCoral
+usecase "/dio_ros_driver"
+usecase "/system_error_monitor"
+usecase "/g30esli_interface_awiv_adapt_receiver"
+
+(/autoware_state_machine) -> (/status_display_manager) : /autoware_state_machine/state
+(/system_error_monitor) --> (/status_display_manager) : /diagnostics_err
+(/g30esli_interface_awiv_adapt_receiver) --> (/status_display_manager) : /vehicle/status/turn_indicators_status
+
+(/status_display_manager) -> (/dio_ros_driver) : /status_display_manager/state
+@enduml
