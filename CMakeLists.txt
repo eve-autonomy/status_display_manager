@@ -38,4 +38,5 @@ target_link_libraries(status_display_manager ${PCL_LIBRARIES})
 
 ament_auto_package(INSTALL_TO_SHARE
   launch
+  config
 )

@@ -15,13 +15,11 @@
 -->
 
 <launch>
-  <arg name="dio_ros_driver_config_path" default="$(find-pkg-share dio_ros_driver)/config/dio_ros_driver.params.yaml"/>
-  <arg name="sleep_time_at_running_state" default="500"/>
+  <arg name="status_display_manager_config_path" default="$(find-pkg-share status_display_manager)/config/status_display_manager.params.yaml"/>
 
   <node pkg="status_display_manager" exec="status_display_manager" name="status_display_manager" output="screen">
     <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)" />
-    <param from="$(var dio_ros_driver_config_path)"/>
-    <param from="$(var sleep_time_at_running_state)"/>
+    <param from="$(var status_display_manager_config_path)"/>
     <remap from="display_status" to="/status_display_manager/state" />
     <remap from="emergency_switch_input" to="/diagnostics_err" />
     <remap from="turn_indicators_status" to="/vehicle/status/turn_indicators_status" />

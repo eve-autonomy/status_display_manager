@@ -34,8 +34,8 @@ StatusDisplayManager::StatusDisplayManager(
   display_dout_ports_()
 {
   // read parameter
-  this->declare_parameter("dout_ports_array0", std::vector<int64_t>{});
-  auto tmp_display_dout_port_list = this->get_parameter("dout_ports_array0").as_integer_array();
+  this->declare_parameter("dout_ports_array", std::vector<int64_t>{});
+  auto tmp_display_dout_port_list = this->get_parameter("dout_ports_array").as_integer_array();
 
   before_autoware_state_ = nullptr;
   status_display_state_ = DisplayStatus::HIDDEN;
@@ -74,7 +74,7 @@ StatusDisplayManager::StatusDisplayManager(
         subscriber_option);
 
     pub_dout_array_ = this->create_publisher<dio_ros_driver::msg::DIOArray>(
-      "/dio/dout_array0",
+      "/dio/dout_array",
       rclcpp::QoS(1));
     status_display_update_timer_ = this->create_wall_timer(
       std::chrono::milliseconds(100),

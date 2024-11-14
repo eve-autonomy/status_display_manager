@@ -38,7 +38,7 @@ The combinations corresponding to the electronic display board status are as fol
     <br>"status" parameter is an array of "diagnostic_msgs/msg/DiagnosticStatus", and among the elements, those whose "status.name" is "/autoware/vehicle/obstacle_crash" are the pressed state of the emergency stop switch. <br>If "status.level" is ERROR, it is pressed.
     - `/vehicle/status/turn_indicators_status` \[[autoware_auto_vehicle_msgs/msg/TurnIndicatorsReport](https://github.com/tier4/autoware_auto_msgs/blob/tier4/main/autoware_auto_vehicle_msgs/msg/TurnIndicatorsReport.idl)\]:<br> State of turn signal.
 - output
-    - `/dio/dout_array0`  \[[dio_ros_driver/msg/DIOArray](https://github.com/kodamays/dio_ros_driver/blob/feat/dio_port_array_setting/msg/DIOArray.msg)\]:<br>GPIO output topic for the display patterns of electronic display board.
+    - `/dio/dout_array`  \[[dio_ros_driver/msg/DIOArray](https://github.com/kodamays/dio_ros_driver/blob/feat/dio_port_array_setting/msg/DIOArray.msg)\]:<br>GPIO output topic for the display patterns of electronic display board.
 
 
 ## Lanch arguments
@@ -52,4 +52,4 @@ The combinations corresponding to the electronic display board status are as fol
 
 | Name               | Description                                                                                   |
 | :----------------- |:--------------------------------------------------------------------------------------------- |
-| dout_ports_array0 | Specify the dout port numbers used for switching the display of the electronic display board. <br>Prohibited if no element is specified in [].|
+| dout_ports_array | Specify the dout port numbers used for switching the display of the electronic display board. <br>Prohibited if no element is specified in [].|
