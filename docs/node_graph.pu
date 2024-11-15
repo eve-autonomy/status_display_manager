@@ -10,5 +10,5 @@ usecase "/g30esli_interface_awiv_adapt_receiver"
 (/system_error_monitor) --> (/status_display_manager) : /diagnostics_err
 (/g30esli_interface_awiv_adapt_receiver) --> (/status_display_manager) : /vehicle/status/turn_indicators_status
 
-(/status_display_manager) -> (/dio_ros_driver) : /status_display_manager/state
+(/status_display_manager) -> (/dio_ros_driver) : /dio/dout_array
 @enduml

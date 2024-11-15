@@ -41,15 +41,21 @@ The combinations corresponding to the electronic display board status are as fol
     - `/dio/dout_array`  \[[dio_ros_driver/msg/DIOArray](https://github.com/kodamays/dio_ros_driver/blob/feat/dio_port_array_setting/msg/DIOArray.msg)\]:<br>GPIO output topic for the display patterns of electronic display board.
 
 
+## Node graph
+![node_graph](docs/node_graph.png)
+
+## Sequence diagram
+![sequence_diagram](docs/sequence_diagram.png)
+
 ## Lanch arguments
 
 | Name                       | Description                                                                                                                                             |
 | :------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| dio_ros_driver_config_path | Specify the config file path for `/dio_ros_driver` that designates the dout port number used for switching the display of the electronic display board. |
-| sleep_time_at_running_state | Specify Anti-flicker Sleep timer value for display while running.<br>Default:500ms |
+| status_display_manager_config_path | Specify the config file path for `/dio_ros_driver` that designates the dout port number used for switching the display of the electronic display board. |
 
 ## Paramater description
 
 | Name               | Description                                                                                   |
 | :----------------- |:--------------------------------------------------------------------------------------------- |
 | dout_ports_array | Specify the dout port numbers used for switching the display of the electronic display board. <br>Prohibited if no element is specified in [].|
+| sleep_time_at_running_state | Specify Anti-flicker Sleep timer value for display while running.<br>Default:500ms |
