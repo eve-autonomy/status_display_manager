@@ -5,7 +5,7 @@ This node controls the display patterns of an electronic display board through `
 
 The display patterns of an electronic display board are defined as follows.
 
-| Display patterns              | discription                                                                                                                      |
+| Display patterns              | Description                                                                                                                      |
 | :---------------------------- | :------------------------------------------------------------------------------------------------------------------------------- |
 | Stop                          | The autonomous vehicle notifies the surrounding pedestrians and vehicle drivers that it is stopped in driving mode.              |
 | Running                       | ⁠The autonomous vehicle notifies the surrounding pedestrians and vehicle drivers that it is in autonomous driving.                |
