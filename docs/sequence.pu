@@ -1,0 +1,96 @@
+@startuml
+
+Participant autoware_state_machine as ASM
+Participant system_error_monitor as SEM
+Participant  interface_awiv_adapt_receiver as IAAR
+Participant status_display_manager as SDM
+Participant dio_ros_driver as DRD
+
+== init (launch) ==
+
+ -> SDM : node launch
+activate SDM
+    
+    SDM -> SDM: ctor
+    activate SDM
+        SDM -> SDM: declare_parameter()
+        SDM -> SDM: create_subscription()
+        SDM -> SDM: create_publisher()  
+
+== running ==
+activate ASM
+activate SEM
+activate IAAR
+activate DRD
+    deactivate SDM
+
+    ASM -> SDM: Topic:/autoware_state_machine/state
+    SDM -> SDM: callbackStateMessage()
+    activate SDM
+        SDM -> SDM: RCLCPP_INFO_THROTTLE()
+    deactivate SDM
+
+    SEM -> SDM: Topic:/diagnotics_err
+    SDM -> SDM: callbackDiagStateMessage()
+    activate SDM
+        SDM -> SDM: RCLCPP_INFO_THROTTLE()
+    deactivate SDM
+    
+    IAAR -> SDM: Topic:/vehicle/status/turn_inidicators_status
+    SDM -> SDM: callbackVehicleTurnMessage()
+    activate SDM
+        SDM -> SDM: RCLCPP_INFO_THROTTLE()
+    deactivate SDM
+
+    SDM -> SDM: statusDisplayManager()
+
+alt service_layer_state == MANUAL
+    SDM -> SDM: status_display_state = HIDDEN(7)
+
+else service_layer_state == AUTO
+    alt status_display_state == PRESS_EMERGENCY_STOP_SWITCH(6) or ERROR_DETECTION(5)
+        SDM -> SDM: Doing nothing
+    else 
+        alt server_layer_state == STATE_DURING_RECEIVE_ROUTE or STATE_ARRIVED_GOAL or STATE_WAITING_ENGAGE_INSTRUCTION or STATE_WAITING_CALL_PERMISSION
+            SDM -> SDM: status_display_state = STOP(0)
+        else server_layer_state == STATE_INFORM_ENGAGE or STATE_INFORM_RESTART or STATE_RUNNING
+            SDM -> SDM: status_display_state = RUNNING(1)
+            alt vehicle_turn_status == ENABLE_RIGHT
+                SDM -> SDM: status_display_state = TURN_RIGHT(3)
+            else vehicle_turn_status == ENABLE_LEFT
+                SDM -> SDM: status_display_state = TURN_LEFT(4)         
+            end
+            alt status_display_state == RUNNING(1) and emergency_switch_status == true
+                SDM -> SDM: status_display_state = PRESS_EMERGENCY_STOP_SWITCH(6)  
+            end
+        else server_layer_state == STATE_TURNING_RIGHT
+            SDM -> SDM: status_display_state = TURN_RIGHT(3) 
+        else server_layer_state == STATE_TURNING_LEFT
+            SDM -> SDM: status_display_state = TURN_LEFT(4)
+        else server_layer_state == STATE_STOP_DUETO_APPROACHING_OBSTACLE
+            SDM -> SDM: status_display_state = OBSTACLE_DETECTION(2)
+        else server_layer_state == STATE_EMERGENCY_STOP
+            alt emergency_switch_status == true
+                SDM -> SDM: status_display_state = PRESS_EMERGENCY_STOP_SWITCH(6) 
+            else emergency_switch_status == false
+                SDM -> SDM: status_display_state = ERROR_DETECTION(5)
+            end
+        else server_layer_state == STATE_RUNNING_TOWARD_STOP_LINE or STATE_RUNNING_TOWARD_OBSTACLE
+            SDM -> SDM: status_display_state = RUNNING(1)
+            alt vehicle_turn_status == ENABLE_RIGHT
+                SDM -> SDM: status_display_state = TURN_RIGHT(3) 
+            else vehicle_turn_status == ENABLE_LEFT
+                SDM -> SDM: status_display_state = TURN_LEFT(4)           
+            end
+        end
+    end
+end
+
+alt before_status_display_state != status_display_state
+    activate SDM
+        SDM -> DRD: Topic:/dio/dout_array
+end
+
+== finish ==
+
+@enduml

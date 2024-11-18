@@ -1,0 +1,5 @@
+# all config data are described here.
+status_display_manager:
+  ros__parameters:
+    dout_ports_array: [5, 6, 7]
+    sleep_time_at_running_state: 500
