@@ -98,7 +98,7 @@ void StatusDisplayManager::callbackStateMessage(
 
     RCLCPP_INFO_THROTTLE(
       this->get_logger(),
-      *this->get_clock(), 1.0,
+      *this->get_clock(), 5000.0,
       "[StatusDisplayManager::callbackStateMessage]"
       "service_layer_state: %u, control_layer_state: %u",
       msg->service_layer_state,
@@ -115,7 +115,7 @@ void StatusDisplayManager::callbackDiagStateMessage(
     if (status.name == "/autoware/vehicle/obstacle_crash") {
       RCLCPP_INFO_THROTTLE(
         this->get_logger(),
-        *this->get_clock(), 1.0,
+        *this->get_clock(), 5000.0,
         "[StatusDisplayManager::callbackDiagStateMessage]"
         "name: %s, level: %u",
         status.name.c_str(),
@@ -142,7 +142,7 @@ void StatusDisplayManager::callbackVehicleTurnMessage(
     std::unique_lock<std::mutex> lock(indicators_mutex_);
     RCLCPP_INFO_THROTTLE(
       this->get_logger(),
-      *this->get_clock(), 1.0,
+      *this->get_clock(), 5000.0,
       "[StatusDisplayManager::callbackVehicleTurnMessage]"
       "vehicle_turn_status: %u",
       msg.report);
