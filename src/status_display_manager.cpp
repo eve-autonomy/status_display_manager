@@ -12,24 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
-#include <fstream>
 #include "status_display_manager/status_display_manager.hpp"
 
-namespace status_display_manager {
+#include <fstream>
+
+namespace status_display_manager
+{
 
 StatusDisplayManager::StatusDisplayManager(
   const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
 : Node("status_display_manager", options),
   display_dout_values_{
     // Listed in the order of DisplayStatus
-    {false, false, false},    // DisplayStatus::STOP
-    {true,  false, false},    // DisplayStatus::RUNNING
-    {false, true,  false},    // DisplayStatus::OBSTACLE_DETECTION
-    {false, false, true },    // DisplayStatus::TURN_RIGHT
-    {true,  false, true },    // DisplayStatus::TURN_LEFT
-    {false, true,  true },    // DisplayStatus::ERROR_DETECTION
-    {true,  true,  false},    // DisplayStatus::PRESS_EMERGENCY_STOP_SWITCH
-    {true,  true,  true }},   // DisplayStatus::HIDDEN
+    {false, false, false},  // DisplayStatus::STOP
+    {true, false, false},   // DisplayStatus::RUNNING
+    {false, true, false},   // DisplayStatus::OBSTACLE_DETECTION
+    {false, false, true},   // DisplayStatus::TURN_RIGHT
+    {true, false, true},    // DisplayStatus::TURN_LEFT
+    {false, true, true},    // DisplayStatus::ERROR_DETECTION
+    {true, true, false},    // DisplayStatus::PRESS_EMERGENCY_STOP_SWITCH
+    {true, true, true}},    // DisplayStatus::HIDDEN
   sleep_time_at_running_state_(declare_parameter<int64_t>("sleep_time_at_running_state", 500)),
   display_dout_ports_()
 {
@@ -41,44 +43,38 @@ StatusDisplayManager::StatusDisplayManager(
   status_display_state_ = DisplayStatus::HIDDEN;
   before_status_display_state_ = status_display_state_;
   emergency_switch_status_ = false;
-  vehicle_turn_status_ = autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::DISABLE;
+  vehicle_turn_status_ = autoware_vehicle_msgs::msg::TurnIndicatorsReport::DISABLE;
 
   if (tmp_display_dout_port_list.size() > 0) {
     for (auto tmp_display_dout_port : tmp_display_dout_port_list) {
       display_dout_ports_.push_back(static_cast<uint32_t>(tmp_display_dout_port));
     }
 
-    callback_group_subscribers_ = this->create_callback_group(
-      rclcpp::CallbackGroupType::MutuallyExclusive);
+    callback_group_subscribers_ =
+      this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     auto subscriber_option = rclcpp::SubscriptionOptions();
     subscriber_option.callback_group = callback_group_subscribers_;
 
-    callback_group_timer_ = this->create_callback_group(
-      rclcpp::CallbackGroupType::MutuallyExclusive);
+    callback_group_timer_ =
+      this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
     sub_state_ = this->create_subscription<autoware_state_machine_msgs::msg::StateMachine>(
-      "autoware_state_machine/state",
-      rclcpp::QoS{3}.transient_local(),
+      "autoware_state_machine/state", rclcpp::QoS{3}.transient_local(),
       std::bind(&StatusDisplayManager::callbackStateMessage, this, std::placeholders::_1),
       subscriber_option);
     sub_dio_state_ = this->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
-      "emergency_switch_input",
-      rclcpp::QoS{1},
+      "emergency_switch_input", rclcpp::QoS{1},
       std::bind(&StatusDisplayManager::callbackDiagStateMessage, this, std::placeholders::_1),
       subscriber_option);
-    sub_turn_state_
-      = this->create_subscription<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>(
-        "turn_indicators_status",
-        rclcpp::QoS{1},
-        std::bind(&StatusDisplayManager::callbackVehicleTurnMessage, this, std::placeholders::_1),
-        subscriber_option);
+    sub_turn_state_ = this->create_subscription<autoware_vehicle_msgs::msg::TurnIndicatorsReport>(
+      "turn_indicators_status", rclcpp::QoS{1},
+      std::bind(&StatusDisplayManager::callbackVehicleTurnMessage, this, std::placeholders::_1),
+      subscriber_option);
 
-    pub_dout_array_ = this->create_publisher<dio_ros_driver::msg::DIOArray>(
-      "/dio/dout_array",
-      rclcpp::QoS(1));
+    pub_dout_array_ =
+      this->create_publisher<dio_ros_driver::msg::DIOArray>("/dio/dout_array", rclcpp::QoS(1));
     status_display_update_timer_ = this->create_wall_timer(
-      std::chrono::milliseconds(100),
-      std::bind(&StatusDisplayManager::update, this),
+      std::chrono::milliseconds(100), std::bind(&StatusDisplayManager::update, this),
       callback_group_timer_);
   }
 }
@@ -91,35 +87,31 @@ StatusDisplayManager::~StatusDisplayManager()
 }
 
 void StatusDisplayManager::callbackStateMessage(
-  const autoware_state_machine_msgs::msg::StateMachine::ConstSharedPtr &msg)
+  const autoware_state_machine_msgs::msg::StateMachine::ConstSharedPtr & msg)
 {
   {
     std::unique_lock<std::mutex> lock(autoware_state_mutex_);
 
     RCLCPP_INFO_THROTTLE(
-      this->get_logger(),
-      *this->get_clock(), 5000.0,
+      this->get_logger(), *this->get_clock(), 5000.0,
       "[StatusDisplayManager::callbackStateMessage]"
       "service_layer_state: %u, control_layer_state: %u",
-      msg->service_layer_state,
-      msg->control_layer_state);
+      msg->service_layer_state, msg->control_layer_state);
 
     queue_autoware_state_.push(msg);
   }
 }
 
 void StatusDisplayManager::callbackDiagStateMessage(
-  const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr &msg)
+  const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr & msg)
 {
-  for (const auto& status : msg->status) {
+  for (const auto & status : msg->status) {
     if (status.name == "/autoware/vehicle/obstacle_crash") {
       RCLCPP_INFO_THROTTLE(
-        this->get_logger(),
-        *this->get_clock(), 5000.0,
+        this->get_logger(), *this->get_clock(), 5000.0,
         "[StatusDisplayManager::callbackDiagStateMessage]"
         "name: %s, level: %u",
-        status.name.c_str(),
-        status.level);
+        status.name.c_str(), status.level);
       {
         std::unique_lock<std::mutex> lock(emergency_switch_mutex_);
         if (status.level == diagnostic_msgs::msg::DiagnosticStatus::ERROR) {
@@ -136,13 +128,12 @@ void StatusDisplayManager::callbackDiagStateMessage(
 }
 
 void StatusDisplayManager::callbackVehicleTurnMessage(
-  const autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport &msg)
+  const autoware_vehicle_msgs::msg::TurnIndicatorsReport & msg)
 {
   {
     std::unique_lock<std::mutex> lock(indicators_mutex_);
     RCLCPP_INFO_THROTTLE(
-      this->get_logger(),
-      *this->get_clock(), 5000.0,
+      this->get_logger(), *this->get_clock(), 5000.0,
       "[StatusDisplayManager::callbackVehicleTurnMessage]"
       "vehicle_turn_status: %u",
       msg.report);
@@ -167,14 +158,15 @@ void StatusDisplayManager::controlStatusDisplay(builtin_interfaces::msg::Time ti
 void StatusDisplayManager::statusDisplayManager(
   autoware_state_machine_msgs::msg::StateMachine autoware_state)
 {
-  if (autoware_state.control_layer_state
-      == autoware_state_machine_msgs::msg::StateMachine::MANUAL) {
+  if (
+    autoware_state.control_layer_state == autoware_state_machine_msgs::msg::StateMachine::MANUAL) {
     // Manual
     status_display_state_ = DisplayStatus::HIDDEN;
   } else {
     // Auto
-    if (status_display_state_ == DisplayStatus::PRESS_EMERGENCY_STOP_SWITCH ||
-        status_display_state_ == DisplayStatus::ERROR_DETECTION) {
+    if (
+      status_display_state_ == DisplayStatus::PRESS_EMERGENCY_STOP_SWITCH ||
+      status_display_state_ == DisplayStatus::ERROR_DETECTION) {
       // Nothing
     } else {
       switch (autoware_state.service_layer_state) {
@@ -197,7 +189,7 @@ void StatusDisplayManager::statusDisplayManager(
         case autoware_state_machine_msgs::msg::StateMachine::STATE_TURNING_RIGHT:
           status_display_state_ = DisplayStatus::TURN_RIGHT;
           break;
-         case autoware_state_machine_msgs::msg::StateMachine::STATE_TURNING_LEFT:
+        case autoware_state_machine_msgs::msg::StateMachine::STATE_TURNING_LEFT:
           status_display_state_ = DisplayStatus::TURN_LEFT;
           break;
         case autoware_state_machine_msgs::msg::StateMachine::STATE_STOP_DUETO_APPROACHING_OBSTACLE:
@@ -230,11 +222,10 @@ void StatusDisplayManager::ApplyTurnIndicatorsReport()
 {
   {
     std::unique_lock<std::mutex> lock(indicators_mutex_);
-    if (vehicle_turn_status_ ==
-      autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ENABLE_RIGHT) {
+    if (vehicle_turn_status_ == autoware_vehicle_msgs::msg::TurnIndicatorsReport::ENABLE_RIGHT) {
       status_display_state_ = DisplayStatus::TURN_RIGHT;
-    } else if (vehicle_turn_status_ ==
-      autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ENABLE_LEFT) {
+    } else if (
+      vehicle_turn_status_ == autoware_vehicle_msgs::msg::TurnIndicatorsReport::ENABLE_LEFT) {
       status_display_state_ = DisplayStatus::TURN_LEFT;
     } else {
       // Nothing
@@ -278,6 +269,5 @@ void StatusDisplayManager::update()
 }  // namespace status_display_manager
 
 #include "rclcpp_components/register_node_macro.hpp"
-
 
 RCLCPP_COMPONENTS_REGISTER_NODE(status_display_manager::StatusDisplayManager)
