@@ -29,7 +29,7 @@
   <depend>rclcpp</depend>
   <depend>dio_ros_driver</depend>
   <depend>autoware_state_machine_msgs</depend>
-  <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>autoware_vehicle_msgs</depend>
   <depend>diagnostic_msgs</depend>
   <depend>rclcpp_components</depend>
 

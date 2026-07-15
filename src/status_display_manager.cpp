@@ -41,7 +41,7 @@ StatusDisplayManager::StatusDisplayManager(
   status_display_state_ = DisplayStatus::HIDDEN;
   before_status_display_state_ = status_display_state_;
   emergency_switch_status_ = false;
-  vehicle_turn_status_ = autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::DISABLE;
+  vehicle_turn_status_ = autoware_vehicle_msgs::msg::TurnIndicatorsReport::DISABLE;
 
   if (tmp_display_dout_port_list.size() > 0) {
     for (auto tmp_display_dout_port : tmp_display_dout_port_list) {
@@ -67,7 +67,7 @@ StatusDisplayManager::StatusDisplayManager(
       std::bind(&StatusDisplayManager::callbackDiagStateMessage, this, std::placeholders::_1),
       subscriber_option);
     sub_turn_state_
-      = this->create_subscription<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>(
+      = this->create_subscription<autoware_vehicle_msgs::msg::TurnIndicatorsReport>(
         "turn_indicators_status",
         rclcpp::QoS{1},
         std::bind(&StatusDisplayManager::callbackVehicleTurnMessage, this, std::placeholders::_1),
@@ -136,7 +136,7 @@ void StatusDisplayManager::callbackDiagStateMessage(
 }
 
 void StatusDisplayManager::callbackVehicleTurnMessage(
-  const autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport &msg)
+  const autoware_vehicle_msgs::msg::TurnIndicatorsReport & msg)
 {
   {
     std::unique_lock<std::mutex> lock(indicators_mutex_);
@@ -231,10 +231,10 @@ void StatusDisplayManager::ApplyTurnIndicatorsReport()
   {
     std::unique_lock<std::mutex> lock(indicators_mutex_);
     if (vehicle_turn_status_ ==
-      autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ENABLE_RIGHT) {
+      autoware_vehicle_msgs::msg::TurnIndicatorsReport::ENABLE_RIGHT) {
       status_display_state_ = DisplayStatus::TURN_RIGHT;
     } else if (vehicle_turn_status_ ==
-      autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ENABLE_LEFT) {
+      autoware_vehicle_msgs::msg::TurnIndicatorsReport::ENABLE_LEFT) {
       status_display_state_ = DisplayStatus::TURN_LEFT;
     } else {
       // Nothing

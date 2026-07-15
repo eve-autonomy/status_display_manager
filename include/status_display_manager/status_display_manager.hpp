@@ -21,7 +21,7 @@
 #include "rclcpp/callback_group.hpp"
 #include "rclcpp/subscription_options.hpp"
 #include "autoware_state_machine_msgs/msg/state_machine.hpp"
-#include "autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp"
+#include "autoware_vehicle_msgs/msg/turn_indicators_report.hpp"
 #include "dio_ros_driver/msg/dio_port.hpp"
 #include "dio_ros_driver/msg/dio_array.hpp"
 #include "dio_ros_driver/msg/dio_port_value.hpp"
@@ -62,7 +62,7 @@ private:
   // Subscriber
   rclcpp::Subscription<autoware_state_machine_msgs::msg::StateMachine>::SharedPtr sub_state_;
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_dio_state_;
-  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>::SharedPtr
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnIndicatorsReport>::SharedPtr
     sub_turn_state_;
 
   // Timer callback
@@ -87,7 +87,7 @@ private:
   void ApplyTurnIndicatorsReport();
   void ApplyEmergencyStopStatus();
   void callbackVehicleTurnMessage(
-    const autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport &msg);
+    const autoware_vehicle_msgs::msg::TurnIndicatorsReport &msg);
   void controlStatusDisplay(builtin_interfaces::msg::Time time_stamp);
   void statusDisplayManager(
     autoware_state_machine_msgs::msg::StateMachine autoware_state);
