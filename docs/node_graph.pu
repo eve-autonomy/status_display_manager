@@ -12,3 +12,4 @@ usecase "/g30esli_interface_awiv_adapt_receiver"
 
 (/status_display_manager) -> (/dio_ros_driver) : /dio/dout_array
 @enduml
+

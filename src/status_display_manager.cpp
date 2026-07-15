@@ -271,3 +271,4 @@ void StatusDisplayManager::update()
 #include "rclcpp_components/register_node_macro.hpp"
 
 RCLCPP_COMPONENTS_REGISTER_NODE(status_display_manager::StatusDisplayManager)
+

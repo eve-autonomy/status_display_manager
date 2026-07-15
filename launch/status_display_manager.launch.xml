@@ -25,3 +25,4 @@
     <remap from="turn_indicators_status" to="/vehicle/status/turn_indicators_status" />
   </node>
 </launch>
+
