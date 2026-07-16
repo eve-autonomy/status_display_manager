@@ -21,8 +21,7 @@
     <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)" />
     <param from="$(var status_display_manager_config_path)"/>
     <remap from="display_status" to="/status_display_manager/state" />
-    <remap from="emergency_switch_input" to="/diagnostics_err" />
-    <remap from="turn_indicators_status" to="/vehicle/status/turn_indicators_status" />
+    <remap from="hazard_status" to="/api/external/get/hazard_status" />
+    <remap from="vehicle_status" to="/api/vehicle/status" />
   </node>
 </launch>
-

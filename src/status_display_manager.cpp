@@ -62,12 +62,14 @@ StatusDisplayManager::StatusDisplayManager(
       "autoware_state_machine/state", rclcpp::QoS{3}.transient_local(),
       std::bind(&StatusDisplayManager::callbackStateMessage, this, std::placeholders::_1),
       subscriber_option);
-    sub_dio_state_ = this->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
-      "emergency_switch_input", rclcpp::QoS{1},
+    sub_emergency_stop_status_ =
+      this->create_subscription<tier4_external_api_msgs::msg::HazardStatusStamped>(
+      "hazard_status", rclcpp::QoS{1},
       std::bind(&StatusDisplayManager::callbackDiagStateMessage, this, std::placeholders::_1),
       subscriber_option);
-    sub_turn_state_ = this->create_subscription<autoware_vehicle_msgs::msg::TurnIndicatorsReport>(
-      "turn_indicators_status", rclcpp::QoS{1},
+    sub_turn_indicator_status_ =
+      this->create_subscription<autoware_adapi_v1_msgs::msg::VehicleStatus>(
+      "vehicle_status", rclcpp::QoS{1},
       std::bind(&StatusDisplayManager::callbackVehicleTurnMessage, this, std::placeholders::_1),
       subscriber_option);
 
@@ -103,41 +105,61 @@ void StatusDisplayManager::callbackStateMessage(
 }
 
 void StatusDisplayManager::callbackDiagStateMessage(
-  const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr & msg)
+  const tier4_external_api_msgs::msg::HazardStatusStamped::ConstSharedPtr & msg)
 {
-  for (const auto & status : msg->status) {
-    if (status.name == "/autoware/vehicle/obstacle_crash") {
+  std::unique_lock<std::mutex> lock(emergency_switch_mutex_);
+  
+  // Search for /autoware/vehicle/obstacle_crash in diag_latent_fault or diag_single_point_fault
+  bool found_obstacle_crash = false;
+  
+  // Search in diag_latent_fault
+  for (const auto & diag : msg->status.diag_latent_fault) {
+    if (diag.name == "/autoware/vehicle/obstacle_crash" && (diag.level == 2 || diag.level == 3)) {
+      found_obstacle_crash = true;
       RCLCPP_INFO_THROTTLE(
         this->get_logger(), *this->get_clock(), 5000.0,
         "[StatusDisplayManager::callbackDiagStateMessage]"
-        "name: %s, level: %u",
-        status.name.c_str(), status.level);
-      {
-        std::unique_lock<std::mutex> lock(emergency_switch_mutex_);
-        if (status.level == diagnostic_msgs::msg::DiagnosticStatus::ERROR) {
-          emergency_switch_status_ = true;
-        } else {
-          emergency_switch_status_ = false;
-        }
-      }
+        "name: %s, level: %u (latent_fault)",
+        diag.name.c_str(), diag.level);
       break;
-    } else {
-      // Nothing
     }
   }
+  
+  // Search in diag_single_point_fault if not found in diag_latent_fault
+  if (!found_obstacle_crash) {
+    for (const auto & diag : msg->status.diag_single_point_fault) {
+      if (diag.name == "/autoware/vehicle/obstacle_crash" && (diag.level == 2 || diag.level == 3)) {
+        found_obstacle_crash = true;
+        RCLCPP_INFO_THROTTLE(
+          this->get_logger(), *this->get_clock(), 5000.0,
+          "[StatusDisplayManager::callbackDiagStateMessage]"
+          "name: %s, level: %u (single_point_fault)",
+          diag.name.c_str(), diag.level);
+        break;
+      }
+    }
+  }
+  
+  emergency_switch_status_ = found_obstacle_crash;
 }
 
 void StatusDisplayManager::callbackVehicleTurnMessage(
-  const autoware_vehicle_msgs::msg::TurnIndicatorsReport & msg)
+  const autoware_adapi_v1_msgs::msg::VehicleStatus::ConstSharedPtr & msg)
 {
-  {
-    std::unique_lock<std::mutex> lock(indicators_mutex_);
-    RCLCPP_INFO_THROTTLE(
-      this->get_logger(), *this->get_clock(), 5000.0,
-      "[StatusDisplayManager::callbackVehicleTurnMessage]"
-      "vehicle_turn_status: %u",
-      msg.report);
-    vehicle_turn_status_ = msg.report;
+  std::unique_lock<std::mutex> lock(indicators_mutex_);
+  RCLCPP_INFO_THROTTLE(
+    this->get_logger(), *this->get_clock(), 5000.0,
+    "[StatusDisplayManager::callbackVehicleTurnMessage]"
+    "turn_indicators_status: %u",
+    msg->turn_indicators.status);
+  
+  uint8_t turn_signal_value = msg->turn_indicators.status;
+  if (turn_signal_value == 2) {  // LEFT
+    vehicle_turn_status_ = autoware_vehicle_msgs::msg::TurnIndicatorsReport::ENABLE_LEFT;
+  } else if (turn_signal_value == 3) {  // RIGHT
+    vehicle_turn_status_ = autoware_vehicle_msgs::msg::TurnIndicatorsReport::ENABLE_RIGHT;
+  } else {  // UNKNOWN(0), DISABLE(1)
+    vehicle_turn_status_ = autoware_vehicle_msgs::msg::TurnIndicatorsReport::DISABLE;
   }
 }
 
@@ -271,4 +293,3 @@ void StatusDisplayManager::update()
 #include "rclcpp_components/register_node_macro.hpp"
 
 RCLCPP_COMPONENTS_REGISTER_NODE(status_display_manager::StatusDisplayManager)
-

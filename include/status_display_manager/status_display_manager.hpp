@@ -24,7 +24,8 @@
 
 #include "autoware_state_machine_msgs/msg/state_machine.hpp"
 #include "autoware_vehicle_msgs/msg/turn_indicators_report.hpp"
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
+#include "tier4_external_api_msgs/msg/hazard_status_stamped.hpp"
+#include "autoware_adapi_v1_msgs/msg/vehicle_status.hpp"
 
 #include <queue>
 #include <vector>
@@ -66,8 +67,10 @@ private:
 
   // Subscriber
   rclcpp::Subscription<autoware_state_machine_msgs::msg::StateMachine>::SharedPtr sub_state_;
-  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_dio_state_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnIndicatorsReport>::SharedPtr sub_turn_state_;
+  rclcpp::Subscription<tier4_external_api_msgs::msg::HazardStatusStamped>::SharedPtr
+    sub_emergency_stop_status_;
+  rclcpp::Subscription<autoware_adapi_v1_msgs::msg::VehicleStatus>::SharedPtr
+    sub_turn_indicator_status_;
 
   // Timer callback
   rclcpp::TimerBase::SharedPtr status_display_update_timer_;
@@ -86,10 +89,10 @@ private:
 
   void callbackStateMessage(
     const autoware_state_machine_msgs::msg::StateMachine::ConstSharedPtr & msg);
-  void callbackDiagStateMessage(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr & msg);
+  void callbackDiagStateMessage(const tier4_external_api_msgs::msg::HazardStatusStamped::ConstSharedPtr & msg);
   void ApplyTurnIndicatorsReport();
   void ApplyEmergencyStopStatus();
-  void callbackVehicleTurnMessage(const autoware_vehicle_msgs::msg::TurnIndicatorsReport & msg);
+  void callbackVehicleTurnMessage(const autoware_adapi_v1_msgs::msg::VehicleStatus::ConstSharedPtr & msg);
   void controlStatusDisplay(builtin_interfaces::msg::Time time_stamp);
   void statusDisplayManager(autoware_state_machine_msgs::msg::StateMachine autoware_state);
   void update();
