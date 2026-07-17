@@ -69,7 +69,7 @@ StatusDisplayManager::StatusDisplayManager(
       subscriber_option);
     sub_turn_indicator_status_ =
       this->create_subscription<autoware_adapi_v1_msgs::msg::VehicleStatus>(
-      "vehicle_status", rclcpp::QoS{1},
+      "vehicle_status", rclcpp::SensorDataQoS(),
       std::bind(&StatusDisplayManager::callbackVehicleTurnMessage, this, std::placeholders::_1),
       subscriber_option);
 
@@ -109,12 +109,12 @@ void StatusDisplayManager::callbackDiagStateMessage(
 {
   std::unique_lock<std::mutex> lock(emergency_switch_mutex_);
   
-  // Search for /autoware/vehicle/obstacle_crash in diag_latent_fault or diag_single_point_fault
+  // Search for /vehicle/007-obstacle_crash in diag_latent_fault or diag_single_point_fault
   bool found_obstacle_crash = false;
   
   // Search in diag_latent_fault
   for (const auto & diag : msg->status.diag_latent_fault) {
-    if (diag.name == "/autoware/vehicle/obstacle_crash" && (diag.level == 2 || diag.level == 3)) {
+    if (diag.name == "/vehicle/007-obstacle_crash" && (diag.level == 2 || diag.level == 3)) {
       found_obstacle_crash = true;
       RCLCPP_INFO_THROTTLE(
         this->get_logger(), *this->get_clock(), 5000.0,
@@ -128,7 +128,7 @@ void StatusDisplayManager::callbackDiagStateMessage(
   // Search in diag_single_point_fault if not found in diag_latent_fault
   if (!found_obstacle_crash) {
     for (const auto & diag : msg->status.diag_single_point_fault) {
-      if (diag.name == "/autoware/vehicle/obstacle_crash" && (diag.level == 2 || diag.level == 3)) {
+      if (diag.name == "/vehicle/007-obstacle_crash" && (diag.level == 2 || diag.level == 3)) {
         found_obstacle_crash = true;
         RCLCPP_INFO_THROTTLE(
           this->get_logger(), *this->get_clock(), 5000.0,
