@@ -100,4 +100,3 @@ private:
 
 }  // namespace status_display_manager
 #endif  // STATUS_DISPLAY_MANAGER__STATUS_DISPLAY_MANAGER_HPP_
-
