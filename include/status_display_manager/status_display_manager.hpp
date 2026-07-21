@@ -15,27 +15,32 @@
 #ifndef STATUS_DISPLAY_MANAGER__STATUS_DISPLAY_MANAGER_HPP_
 #define STATUS_DISPLAY_MANAGER__STATUS_DISPLAY_MANAGER_HPP_
 
+#include "dio_ros_driver/msg/dio_array.hpp"
+#include "dio_ros_driver/msg/dio_port.hpp"
+#include "dio_ros_driver/msg/dio_port_value.hpp"
+#include "rclcpp/callback_group.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/subscription_options.hpp"
+
+#include "autoware_state_machine_msgs/msg/state_machine.hpp"
+#include "autoware_vehicle_msgs/msg/turn_indicators_report.hpp"
+#include "tier4_external_api_msgs/msg/hazard_status_stamped.hpp"
+#include "autoware_adapi_v1_msgs/msg/vehicle_status.hpp"
+
 #include <queue>
 #include <vector>
-#include "rclcpp/rclcpp.hpp"
-#include "rclcpp/callback_group.hpp"
-#include "rclcpp/subscription_options.hpp"
-#include "autoware_state_machine_msgs/msg/state_machine.hpp"
-#include "autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp"
-#include "dio_ros_driver/msg/dio_port.hpp"
-#include "dio_ros_driver/msg/dio_array.hpp"
-#include "dio_ros_driver/msg/dio_port_value.hpp"
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
 
-namespace status_display_manager {
+namespace status_display_manager
+{
 
-class StatusDisplayManager : public rclcpp::Node {
+class StatusDisplayManager : public rclcpp::Node
+{
 public:
   explicit StatusDisplayManager(const rclcpp::NodeOptions & options);
   ~StatusDisplayManager();
 
 private:
-  #define DISPLAY_DOUT_PORTS_NUM (3)
+#define DISPLAY_DOUT_PORTS_NUM (3)
   enum class DisplayStatus : int8_t {
     STOP = 0,
     RUNNING,
@@ -48,7 +53,8 @@ private:
     DISPLAY_STATUS_NUMS
   };
 
-  struct display_dout_values {
+  struct display_dout_values
+  {
     bool values_[DISPLAY_DOUT_PORTS_NUM];
   } const display_dout_values_[(uint8_t)DisplayStatus::DISPLAY_STATUS_NUMS];
 
@@ -61,9 +67,10 @@ private:
 
   // Subscriber
   rclcpp::Subscription<autoware_state_machine_msgs::msg::StateMachine>::SharedPtr sub_state_;
-  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_dio_state_;
-  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>::SharedPtr
-    sub_turn_state_;
+  rclcpp::Subscription<tier4_external_api_msgs::msg::HazardStatusStamped>::SharedPtr
+    sub_emergency_stop_status_;
+  rclcpp::Subscription<autoware_adapi_v1_msgs::msg::VehicleStatus>::SharedPtr
+    sub_turn_indicator_status_;
 
   // Timer callback
   rclcpp::TimerBase::SharedPtr status_display_update_timer_;
@@ -81,16 +88,13 @@ private:
   std::mutex emergency_switch_mutex_;
 
   void callbackStateMessage(
-    const autoware_state_machine_msgs::msg::StateMachine::ConstSharedPtr &msg);
-  void callbackDiagStateMessage(
-    const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr &msg);
+    const autoware_state_machine_msgs::msg::StateMachine::ConstSharedPtr & msg);
+  void callbackDiagStateMessage(const tier4_external_api_msgs::msg::HazardStatusStamped::ConstSharedPtr & msg);
   void ApplyTurnIndicatorsReport();
   void ApplyEmergencyStopStatus();
-  void callbackVehicleTurnMessage(
-    const autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport &msg);
+  void callbackVehicleTurnMessage(const autoware_adapi_v1_msgs::msg::VehicleStatus::ConstSharedPtr & msg);
   void controlStatusDisplay(builtin_interfaces::msg::Time time_stamp);
-  void statusDisplayManager(
-    autoware_state_machine_msgs::msg::StateMachine autoware_state);
+  void statusDisplayManager(autoware_state_machine_msgs::msg::StateMachine autoware_state);
   void update();
 };
 
